@@ -85,4 +85,11 @@ enum nct7363_sensor_offset {
 	NCT7363_GPIO_READ_OFFSET,
 };
 
+enum nct7363_pin_type {
+	NCT7363_PIN_TPYE_GPIO,
+	NCT7363_PIN_TPYE_PWM,
+	NCT7363_PIN_TPYE_FANIN,
+	NCT7363_PIN_TPYE_RESERVED
+};
+
 #endif
