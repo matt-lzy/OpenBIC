@@ -759,10 +759,7 @@ typedef struct _nct7363_init_arg {
 } nct7363_init_arg;
 
 typedef struct _hdc1080_init_arg {
-	uint8_t idx;
-	uint8_t mode;
-	uint8_t tres; // Temperature Measurement Resolution
-	uint8_t hres; //Humidity Measurement Resolution
+	bool is_init;
 } hdc1080_init_arg;
 
 extern bool enable_sensor_poll_thread;
