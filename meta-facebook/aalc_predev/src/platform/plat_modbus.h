@@ -23,6 +23,9 @@
 #define MODBUS_UART_NODE_ADDR 0x0C
 #define MODBUS_UART_FP_OFFSET 5000
 
+#define MODBUS_FC3_REGS_QUANTITY 125
+#define MODBUS_FC16_REGS_QUANTITY 123
+
 void modbus_server_handler_init(void);
 
 typedef struct _modbus_sensor_cfg {

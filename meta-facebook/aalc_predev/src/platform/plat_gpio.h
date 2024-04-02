@@ -236,3 +236,5 @@ extern enum _GPIO_NUMS_ GPIO_NUMS;
 extern char *gpio_name[];
 
 #endif
+
+uint16_t plat_gpio_cfg_size(void);
