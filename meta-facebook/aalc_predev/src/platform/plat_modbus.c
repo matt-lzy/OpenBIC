@@ -25,6 +25,7 @@
 #include "eeprom.h"
 #include "plat_fru.h"
 #include <time.h>
+#include "adm1272.h"
 
 LOG_MODULE_REGISTER(plat_modbus);
 
@@ -38,6 +39,14 @@ static uint16_t regs_rd[16];
 static uint8_t cb_num;
 static uint16_t cb_addr[2];
 
+uint8_t modbus_write_adm1272_enable(uint16_t *data, uint16_t addr, uint16_t reg_qty)
+{
+	if (enable_adm1272_hsc(0,0x11,1) == true) // uint8_t bus, uint8_t addr, bool enable_flag
+		return ADM1272_WRITE_ENABLE_SUCCESS;
+	else
+	  	return ADM1272_WRITE_ENABLE_FAIL;
+}
+
 modbus_sensor_cfg plat_modbus_sensors[] = {
 	/* sensor number,  modbus data addr  */
 	{ SENSOR_NUM_BPB_RPU_COOLANT_FLOW_RATE_LPM, RPU_Coolant_Flow_Rate_LPM },
@@ -45,27 +54,27 @@ modbus_sensor_cfg plat_modbus_sensors[] = {
 	{ SENSOR_NUM_BPB_RPU_COOLANT_INLET_TEMP_C, RPU_Coolant_Inlet_Temp_C },
 	{ SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_P_KPA, RPU_Coolant_Outlet_Pressure_kPa },
 	{ SENSOR_NUM_BPB_RPU_COOLANT_INLET_P_KPA, RPU_Coolant_Inlet_Pressure_kPa },
-	{ 0, RPU_PWR_W },
-	{ 0, AALC_TOTAL_PWR_W },
-	{ 0, RPU_INPUT_VOLT_V },
+	//{ 0, RPU_PWR_W },
+	//{ 0, AALC_TOTAL_PWR_W },
+	//{ 0, RPU_INPUT_VOLT_V },
 	{ SENSOR_NUM_MB_RPU_AIR_INLET_TEMP_C, RPU_Air_Inlet_Temp_C },
-	{ 0, RPU_Pump_PWM_TACH_PCT },
+	//{ 0, RPU_Pump_PWM_TACH_PCT },
 	{ SENSOR_NUM_PB_1_PUMP_TACH_RPM, RPU_Pump1_TACH_RPM },
 	{ SENSOR_NUM_PB_2_PUMP_TACH_RPM, RPU_Pump2_TACH_RPM },
 	{ SENSOR_NUM_PB_3_PUMP_TACH_RPM, RPU_Pump3_TACH_RPM },
-	{ 0, RPU_FAN1_STATUS },
-	{ 0, RPU_FAN2_STATUS },
+	//{ 0, RPU_FAN1_STATUS },
+	//{ 0, RPU_FAN2_STATUS },
 	{ SENSOR_NUM_MB_FAN1_TACH_RPM, RPU_FAN1_TACH_RPM },
 	{ SENSOR_NUM_MB_FAN2_TACH_RPM, RPU_FAN2_TACH_RPM },
-	{ 0, AALC_Cooling_Capacity_W },
-	{ 0, RPU_Pump1_STATUS },
-	{ 0, RPU_Pump2_STATUS },
-	{ 0, RPU_Pump3_STATUS },
-	{ 0, RPU_Reservoir_Status },
-	{ 0, RPU_LED_Reservoir_Status },
-	{ 0, RPU_LED_Leakage_Status },
-	{ 0, RPU_LED_Fault_Status },
-	{ 0, RPU_LED_Power_Status },
+	//{ 0, AALC_Cooling_Capacity_W },
+	//{ 0, RPU_Pump1_STATUS },
+	//{ 0, RPU_Pump2_STATUS },
+	//{ 0, RPU_Pump3_STATUS },
+	//{ 0, RPU_Reservoir_Status },
+	//{ 0, RPU_LED_Reservoir_Status },
+	//{ 0, RPU_LED_Leakage_Status },
+	//{ 0, RPU_LED_Fault_Status },
+	//{ 0, RPU_LED_Power_Status },
 	{ SENSOR_NUM_BB_TMP75_TEMP_C, BB_TMP75_TEMP_C },
 	{ SENSOR_NUM_BPB_RPU_OUTLET_TEMP_C, BPB_RPU_OUTLET_TEMP_C },
 	{ SENSOR_NUM_PDB_HDC1080DMBR_TEMP_C, PDB_HDC1080DMBR_TEMP_C },
@@ -90,9 +99,9 @@ modbus_sensor_cfg plat_modbus_sensors[] = {
 	{ SENSOR_NUM_BB_HSC_P51V_PIN_PWR_W, BB_HSC_P51V_PIN_PWR_W },
 	{ SENSOR_NUM_BPB_HSC_P51V_PIN_PWR_W, BPB_HSC_P51V_PIN_PWR_W },
 	{ SENSOR_NUM_PB_1_HSC_P48V_PIN_PWR_W, PB_1_HSC_P48V_PIN_PWR_W },
-	{ 0, Pump_1_Running },
-	{ 0, Pump_2_Running  },
-	{ 0, Pump_3_Running  },
+	//{ 0, Pump_1_Running },
+	//{ 0, Pump_2_Running  },
+	//{ 0, Pump_3_Running  },
 	{ SENSOR_NUM_PB_2_HSC_P48V_PIN_PWR_W, PB_2_HSC_P48V_PIN_PWR_W },
 	{ SENSOR_NUM_PB_3_HSC_P48V_PIN_PWR_W, PB_3_HSC_P48V_PIN_PWR_W },
 	{ SENSOR_NUM_PB_1_FAN_1_TACH_RPM, PB_1_FAN_1_TACH_RPM },
@@ -111,10 +120,10 @@ modbus_sensor_cfg plat_modbus_sensors[] = {
 	{ SENSOR_NUM_PB_1_HUM_PCT_RH, PB_1_HUM_PCT_RH },
 	{ SENSOR_NUM_PB_2_HUM_PCT_RH, PB_2_HUM_PCT_RH },
 	{ SENSOR_NUM_PB_3_HUM_PCT_RH, PB_3_HUM_PCT_RH },
-	{ 0, HEX_FAN_PWM_TACH_PCT },
-	{ 0, HEX_PWR_W },
-	{ 0, HEX_INPUT_VOLT_V },
-	{ 0, HEX_INPUT_CURRENT_V },
+	//{ 0, HEX_FAN_PWM_TACH_PCT },
+	//{ 0, HEX_PWR_W },
+	//{ 0, HEX_INPUT_VOLT_V },
+	//{ 0, HEX_INPUT_CURRENT_V },
 	{ SENSOR_NUM_FB_1_FAN_TACH_RPM, HEX_FAN1_TACH_RPM },
 	{ SENSOR_NUM_FB_2_FAN_TACH_RPM, HEX_FAN2_TACH_RPM },
 	{ SENSOR_NUM_FB_3_FAN_TACH_RPM, HEX_FAN3_TACH_RPM },
@@ -129,8 +138,8 @@ modbus_sensor_cfg plat_modbus_sensors[] = {
 	{ SENSOR_NUM_SB_HEX_AIR_OUTLET_2_TEMP_C, HEX_Air_Outlet2_Temp_C },
 	{ SENSOR_NUM_FB_1_HEX_INLET_TEMP_C, HEX_Air_Inlet1_Temp_C },
 	{ SENSOR_NUM_FB_2_HEX_INLET_TEMP_C, HEX_Air_Inlet2_Temp_C },
-	{ 0, HEX_Water_Inlet_Temp_C },
-	{ 0, HEX_Bladder_Level_Status },
+	//{ 0, HEX_Water_Inlet_Temp_C },
+	//{ 0, HEX_Bladder_Level_Status },
 	{ SENSOR_NUM_SB_HEX_AIR_OUTLET_3_TEMP_C, SB_HEX_AIR_OUTLET_3_TEMP_C },
 	{ SENSOR_NUM_SB_HEX_AIR_OUTLET_4_TEMP_C, SB_HEX_AIR_OUTLET_4_TEMP_C },
 	{ SENSOR_NUM_FB_3_HEX_INLET_TEMP_C, FB_3_HEX_INLET_TEMP_C },
@@ -341,6 +350,15 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg, uint16_t reg_qty)
 		case FRU_MFR_DATE_ADDR:
 		case FRU_MFR_SERIEL_ADDR:
 		case MODBUS_POWER_RPU_ADDR:
+			status = modbus_write_adm1272_enable(regs_wr, cb_addr[0], reg_qty);
+			memset(&cb_addr, 0, sizeof(cb_addr));
+			memset(&regs_wr, 0, sizeof(regs_wr));
+			cb_num = 0;			
+			if (status == ADM1272_WRITE_ENABLE_SUCCESS) {
+				return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+			} else {
+				return MODBUS_READ_WRITE_REGISTER_FAIL;
+			}
 		case FRU_WORKORDER_ADDR:
 		case FRU_HW_REVISION_ADDR:
 		case FRU_FW_REVISION_ADDR:
