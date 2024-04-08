@@ -26,6 +26,7 @@
 #include "plat_fru.h"
 #include "hal_gpio.h"
 #include "plat_gpio.h"
+#include "libutil.h"
 
 LOG_MODULE_REGISTER(plat_modbus);
 
@@ -46,6 +47,37 @@ modbus_sensor_cfg plat_modbus_sensors[] = {
 	{ SENSOR_NUM_BPB_RPU_OUTLET_TEMP_C, MODBUS_TEMP_BPB_TMP75_ADDR },
 };
 
+static int coil_rd(uint16_t addr, bool *state)
+{
+	CHECK_NULL_ARG_WITH_RETURN(state, MODBUS_VAL_NOT_IN_RANGE);
+
+	if (addr < plat_gpio_cfg_size()) { //GPIO number
+		int val = gpio_get((uint8_t)addr);
+		if (val == 0 || val == 1)
+			*state = (bool)val;
+		else
+			return MODBUS_READ_WRITE_REGISTER_FAIL;
+	} else {
+		return MODBUS_ADDR_NOT_DEFINITION;
+	}
+
+	return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+}
+
+static int coil_wr(uint16_t addr, bool state)
+{
+	if (addr < plat_gpio_cfg_size()) { //GPIO number
+		gpio_set((uint8_t)addr, (uint8_t)state);
+		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+	} else if (addr == 0x0C30) { // FW update: Set RPU Stop/Run
+		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+	} else if (addr == 0x0C31) { // FW update: Synax Check
+		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+	} else {
+		return MODBUS_ADDR_NOT_DEFINITION;
+	}
+}
+
 static int holding_reg_rd(uint16_t addr, uint16_t *reg, uint16_t reg_qty)
 {
 	if (reg_qty >= MODBUS_FC3_REGS_QUANTITY)
@@ -61,43 +93,30 @@ static int holding_reg_rd(uint16_t addr, uint16_t *reg, uint16_t reg_qty)
 	memset(&cb_addr, 0, sizeof(cb_addr));
 	memset(&regs_rd, 0, sizeof(regs_rd));
 
-	if (addr < 0x1000) { //GPIO & i2c Read test
-		if (addr < 0x0100) {
-			if (addr < plat_gpio_cfg_size()) { //GPIO number
-				if (reg_qty != 1)
-					return MODBUS_NOT_IN_REGISTER_VAL_RANGE;
+	if (addr < 0x1000) { //I2C BUS & Address(addr= 0x0YZZ, Y:bus ZZ:Address)
+		I2C_MSG msg;
+		msg.bus = ((uint8_t)(addr >> 8)) - 1; //base 1 -> 0 base
+		msg.target_addr = (uint8_t)(addr & 0x00ff);
+		msg.rx_len = (uint8_t)reg_qty * 2;
+		msg.tx_len = 0;
 
-				*reg = (uint16_t)gpio_get((uint8_t)addr);
-				return MODBUS_READ_WRITE_REGISTER_SUCCESS;
-			} else {
-				return MODBUS_ADDR_NOT_DEFINITION;
-			}
-		} else { //I2C BUS & Address(addr= 0x0YZZ, Y:bus ZZ:Address)
-			I2C_MSG msg;
-			msg.bus = ((uint8_t)(addr >> 8)) - 1; //base 1 -> 0 base
-			msg.target_addr = (uint8_t)(addr & 0x00ff);
-			msg.rx_len = (uint8_t)reg_qty * 2;
-			msg.tx_len = 0;
+		int ret = i2c_master_read(&msg, 3);
+		if (ret != 0)
+			return MODBUS_READ_WRITE_REGISTER_FAIL;
 
-			int ret = i2c_master_read(&msg, 3);
-			if (ret != 0)
-				return MODBUS_READ_WRITE_REGISTER_FAIL;
-
-			for (uint8_t i = 0; i < msg.rx_len; i++) {
-				regs_rd[i] =
-					(uint16_t)((msg.data[2 * i] << 8) + msg.data[2 * i + 1]);
-			}
-
-			cb_num = reg_qty - 1;
-			*reg = regs_rd[0];
-			cb_addr[0] = addr;
-			cb_addr[1] = addr + cb_num;
-			return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+		for (uint8_t i = 0; i < msg.rx_len; i++) {
+			regs_rd[i] = (uint16_t)((msg.data[2 * i] << 8) + msg.data[2 * i + 1]);
 		}
+
+		cb_num = reg_qty - 1;
+		*reg = regs_rd[0];
+		cb_addr[0] = addr;
+		cb_addr[1] = addr + cb_num;
+		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
 	} else if (addr < 0x9200) { // sensor addr is less than 0x9200
 		int reading = 0;
 		if ((reg_qty * 2) != sizeof(reading))
-			return MODBUS_NOT_IN_REGISTER_VAL_RANGE;
+			return MODBUS_VAL_NOT_IN_RANGE;
 
 		for (uint8_t index = 0; index < sensor_config_count; index++) {
 			if (plat_modbus_sensors[index].data_addr == addr) {
@@ -194,44 +213,27 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg, uint16_t reg_qty)
 	return MODBUS_READ_WRITE_REGISTER_FAIL;
 
 wr_func:
-	if (cb_addr[0] < 0x1000) { //GPIO & i2c Read test
-		if (cb_addr[0] < 0x0100) {
-			if (cb_addr[0] < plat_gpio_cfg_size()) { //GPIO number
-				if ((reg_qty != 1) || (regs_wr[0] > 1))
-					return MODBUS_NOT_IN_REGISTER_VAL_RANGE;
+	if (cb_addr[0] < 0x1000) { //I2C BUS & Address(addr= 0x0YZZ, Y:bus ZZ:Address)
+		uint8_t i2c_retry = 3;
+		I2C_MSG msg;
+		msg.bus = ((uint8_t)(addr >> 8)) - 1; //1 base -> 0base
+		msg.target_addr = (uint8_t)(cb_addr[0] & 0x00ff);
+		msg.tx_len = (uint8_t)(reg_qty * 2);
 
-				gpio_set((uint8_t)cb_addr[0], (uint8_t)regs_wr[0]);
-				memset(&cb_addr, 0, sizeof(cb_addr));
-				memset(&regs_wr, 0, sizeof(regs_wr));
-
-				return MODBUS_READ_WRITE_REGISTER_SUCCESS;
-			} else {
-				memset(&cb_addr, 0, sizeof(cb_addr));
-				memset(&regs_wr, 0, sizeof(regs_wr));
-				return MODBUS_ADDR_NOT_DEFINITION;
-			}
-		} else { //I2C BUS & Address(addr= 0x0YZZ, Y:bus ZZ:Address)
-			uint8_t i2c_retry = 3;
-			I2C_MSG msg;
-			msg.bus = ((uint8_t)(addr >> 8)) - 1; //1 base -> 0base
-			msg.target_addr = (uint8_t)(cb_addr[0] & 0x00ff);
-			msg.tx_len = (uint8_t)(reg_qty * 2);
-
-			for (uint8_t i = 0; i < reg_qty; i++) {
-				msg.data[2 * i] = (uint8_t)(regs_wr[2 * i] << 8);
-				msg.data[2 * i + 1] = (uint8_t)(regs_wr[2 * i] && 0X00FF);
-			}
-
-			//memcpy(&i2c_data_wr[0], &regs_wr[0], msg.tx_len);
-
-			memset(&cb_addr, 0, sizeof(cb_addr));
-			memset(&regs_wr, 0, sizeof(regs_wr));
-
-			if (i2c_master_write(&msg, i2c_retry))
-				return MODBUS_READ_WRITE_REGISTER_FAIL;
-			else
-				return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+		for (uint8_t i = 0; i < reg_qty; i++) {
+			msg.data[2 * i] = (uint8_t)(regs_wr[2 * i] << 8);
+			msg.data[2 * i + 1] = (uint8_t)(regs_wr[2 * i] && 0X00FF);
 		}
+
+		//memcpy(&i2c_data_wr[0], &regs_wr[0], msg.tx_len);
+
+		memset(&cb_addr, 0, sizeof(cb_addr));
+		memset(&regs_wr, 0, sizeof(regs_wr));
+
+		if (i2c_master_write(&msg, i2c_retry))
+			return MODBUS_READ_WRITE_REGISTER_FAIL;
+		else
+			return MODBUS_READ_WRITE_REGISTER_SUCCESS;
 	} else {
 		uint8_t status = 0;
 		switch (cb_addr[0]) {
@@ -269,6 +271,8 @@ wr_func:
 static struct modbus_user_callbacks mbs_cbs = {
 	.holding_reg_rd = holding_reg_rd,
 	.holding_reg_wr = holding_reg_wr,
+	.coil_rd = coil_rd,
+	.coil_wr = coil_wr,
 };
 
 const static struct modbus_iface_param server_param = {

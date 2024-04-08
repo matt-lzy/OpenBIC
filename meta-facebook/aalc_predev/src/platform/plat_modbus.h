@@ -23,6 +23,11 @@
 #define MODBUS_UART_NODE_ADDR 0x0C
 #define MODBUS_UART_FP_OFFSET 5000
 
+#define MODBUS_UART_BAUDRATE_LOW 19200
+#define MODBUS_UART_BAUDRATE_HIGH 115200
+#define MODBUS_UART_PARITY UART_CFG_PARITY_NONE
+#define MODBUS_UART_RESPONSE_T 1000000 
+//baudrate 19200, from zephyr/samples/subsys/modbus/rtu_client, client_param: rx_timeout = 1000000(default 50000)
 #define MODBUS_FC3_REGS_QUANTITY 125
 #define MODBUS_FC16_REGS_QUANTITY 123
 
