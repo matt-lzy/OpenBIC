@@ -233,8 +233,3 @@ typedef struct _modbus_sensor_cfg {
 #define FRU_NOAH_ARK_CONFIG_ADDR 0x19F8
 #define FRU_HEATEXCHANGER_CONTROLBOX_FPBN_ADDR 0x1A00
 #define FRU_QUANTA_FB_PART_ADDR 0x1A0C
-
-enum adm1272_write_enable_status {
-	ADM1272_WRITE_ENABLE_SUCCESS,
-	ADM1272_WRITE_ENABLE_FAIL,
-};
