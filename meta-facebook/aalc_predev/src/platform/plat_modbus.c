@@ -272,18 +272,31 @@ static int holding_reg_rd(uint16_t addr, uint16_t *reg, uint16_t reg_qty)
 		uint8_t status = 0;
 		switch (addr) {
 		case FRU_FB_PART_ADDR:
+			break;
 		case FRU_MFR_MODEL_ADDR:
+			break;
 		case FRU_MFR_DATE_ADDR:
+			break;
 		case FRU_MFR_SERIEL_ADDR:
+			break;
 		case MODBUS_POWER_RPU_ADDR:
+			break;
 		case FRU_WORKORDER_ADDR:
+			break;
 		case FRU_HW_REVISION_ADDR:
+			break;
 		case FRU_FW_REVISION_ADDR:
+			break;
 		case FRU_TOTAL_UP_TIME_ADDR:
+			break;
 		case FRU_LAST_ON_TIME_ADDR:
+			break;
 		case FRU_HMI_REVISION_ADDR:
+			break;
 		case FRU_NOAH_ARK_CONFIG_ADDR:
+			break;
 		case FRU_HEATEXCHANGER_CONTROLBOX_FPBN_ADDR:
+			break;
 		case FRU_QUANTA_FB_PART_ADDR:
 			status = modbus_read_fruid_data(regs_rd, addr, reg_qty);
 			if (status == FRU_READ_SUCCESS) {
@@ -295,9 +308,11 @@ static int holding_reg_rd(uint16_t addr, uint16_t *reg, uint16_t reg_qty)
 			} else {
 				return MODBUS_READ_WRITE_REGISTER_FAIL;
 			}
+			break;
 		default:
 			LOG_ERR("Read Modbus Sensor failed");
 			return MODBUS_READ_WRITE_REGISTER_FAIL;
+			break;
 		}
 
 		//printk("Holding register read, addr %u, val %u\n", addr, *reg);
@@ -338,12 +353,16 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg, uint16_t reg_qty)
 wr_func:
 	switch (cb_addr[0]) {
 	case FRU_FB_PART_ADDR:
+		break;
 	case FRU_MFR_MODEL_ADDR:
+		break;
 	case FRU_MFR_DATE_ADDR:
+		break;
 	case FRU_MFR_SERIEL_ADDR:
+		break;
 	case MODBUS_POWER_RPU_ADDR:
-		status = enable_adm1272_hsc(0, 0x11,
-					    1); // uint8_t bus, uint8_t addr, bool enable_flag
+		// uint8_t bus, uint8_t addr, bool enable_flag
+		status = enable_adm1272_hsc(reg, addr, 1); 
 		memset(&cb_addr, 0, sizeof(cb_addr));
 		memset(&regs_wr, 0, sizeof(regs_wr));
 		cb_num = 0;
@@ -351,15 +370,23 @@ wr_func:
 			return MODBUS_READ_WRITE_REGISTER_SUCCESS;
 		else
 			return MODBUS_READ_WRITE_REGISTER_FAIL;
-
+		break;
 	case FRU_WORKORDER_ADDR:
+		break;
 	case FRU_HW_REVISION_ADDR:
+		break;
 	case FRU_FW_REVISION_ADDR:
+		break;
 	case FRU_TOTAL_UP_TIME_ADDR:
+		break;
 	case FRU_LAST_ON_TIME_ADDR:
+		break;
 	case FRU_HMI_REVISION_ADDR:
+		break;
 	case FRU_NOAH_ARK_CONFIG_ADDR:
+		break;
 	case FRU_HEATEXCHANGER_CONTROLBOX_FPBN_ADDR:
+		break;
 	case FRU_QUANTA_FB_PART_ADDR:
 		status = modbus_write_fruid_data(regs_wr, cb_addr[0], reg_qty);
 		memset(&cb_addr, 0, sizeof(cb_addr));
@@ -370,14 +397,17 @@ wr_func:
 		} else {
 			return MODBUS_READ_WRITE_REGISTER_FAIL;
 		}
+		break;
 	default:
 		memset(&cb_addr, 0, sizeof(cb_addr));
 		memset(&regs_wr, 0, sizeof(regs_wr));
 		cb_num = 0;
 		LOG_ERR("Read Modbus Sensor failed");
 		return MODBUS_ADDR_NOT_DEFINITION;
+		break;
 	}
-}
+	return MODBUS_ADDR_NOT_DEFINITION;
+};
 
 static struct modbus_user_callbacks mbs_cbs = {
 	.holding_reg_rd = holding_reg_rd,
