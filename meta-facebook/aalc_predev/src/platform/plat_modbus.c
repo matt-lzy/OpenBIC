@@ -36,6 +36,8 @@ static char server_iface_name[] = "MODBUS0";
 struct k_thread modbus_server_thread;
 K_KERNEL_STACK_MEMBER(modbus_server_thread_stack, MODBUS_SERVER_THREAD_SIZE);
 
+static struct k_timer reg_wr_timeout;
+
 static float pow_of_10(int8_t exp)
 {
 	float ret = 1.0;
@@ -121,6 +123,8 @@ void init_modbus_command_table(void)
 		}
 	}
 
+	k_timer_init(&reg_wr_timeout, NULL, NULL);
+
 	return;
 
 init_fail:
@@ -143,9 +147,12 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 	int ret = MODBUS_READ_WRITE_REGISTER_SUCCESS;
 	uint8_t offset = addr - ptr->addr;
 
+	if (offset == 0)
+		k_timer_start(&reg_wr_timeout, K_MSEC(100), K_NO_WAIT);
+
 	ptr->data[offset] = reg;
 
-	if (offset == (ptr->size - 1))
+	if (offset == (ptr->size - 1) || k_timer_status_get(&reg_wr_timeout))
 		ret = ptr->wr_fn(ptr);
 
 	return ret;

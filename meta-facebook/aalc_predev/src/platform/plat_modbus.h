@@ -24,6 +24,7 @@
 #define MODBUS_UART_FP_OFFSET 5000
 
 void modbus_server_handler_init(void);
+void init_modbus_command_table(void);
 typedef struct _modbus_command_mapping {
 	uint16_t addr;
 	uint8_t (*wr_fn)(struct _modbus_command_mapping *);
