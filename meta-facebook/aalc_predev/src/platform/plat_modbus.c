@@ -29,9 +29,15 @@
 #include "plat_sensor_table.h"
 #include "plat_fru.h"
 
+#include "adm1272.h"
+
 LOG_MODULE_REGISTER(plat_modbus);
 
 static char server_iface_name[] = "MODBUS0";
+
+// define adm1272 operation status
+uint16_t OPERATION_DISABLE = 0x00;
+uint16_t OPERATION_ENABLE = 0x01;
 
 struct k_thread modbus_server_thread;
 K_KERNEL_STACK_MEMBER(modbus_server_thread_stack, MODBUS_SERVER_THREAD_SIZE);
@@ -61,6 +67,19 @@ static float pow_of_10(int8_t exp)
 
 	actual_val =  raw_val * m * (10 ^ r)
 */
+static sensor_cfg *get_sensor_config_data(modbus_command_mapping *cmd)
+{
+	// Check sensor information in sensor config table
+	uint8_t sensor_num = cmd->arg0;
+	sensor_cfg *cfg = NULL;
+	cfg = find_sensor_cfg_via_sensor_num(sensor_config, sensor_config_count, sensor_num);
+	if (cfg == NULL) {
+		LOG_ERR("Fail to find sensor info in config table, sensor_num: 0x%x, cfg count: 0x%x",
+			sensor_num, sensor_config_count);
+		return NULL;
+	}
+	return cfg;
+}
 static uint8_t modbus_get_senser_reading(modbus_command_mapping *cmd)
 {
 	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_ARG_NULL);
@@ -78,6 +97,26 @@ static uint8_t modbus_get_senser_reading(modbus_command_mapping *cmd)
 		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
 	}
 
+	return MODBUS_READ_WRITE_REGISTER_FAIL;
+}
+
+static uint8_t modbus_write_adm1272_reg(modbus_command_mapping *cmd)
+{
+	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_ARG_NULL);
+	// Check sensor information in sensor config table
+	sensor_cfg *cfg = get_sensor_config_data(cmd);
+	//uint8_t bus,uint8_t addr, bool enable_flag
+	uint8_t bus = cfg->port;
+	uint8_t addr = cfg->target_addr;
+	bool enable_flag = false;
+	if (cmd->data == &OPERATION_ENABLE) {
+		enable_flag = true;
+	}
+	// 1 enable, 0 disable
+	bool status = enable_adm1272_hsc(bus, addr, enable_flag);
+	if (status == true) {
+		return MODBUS_READ_WRITE_REGISTER_SUCCESS;
+	}
 	return MODBUS_READ_WRITE_REGISTER_FAIL;
 }
 
@@ -425,6 +464,13 @@ modbus_command_mapping modbus_command_table[] = {
 	  SENSOR_NUM_BPB_CDU_COOLANT_LEAKAGE_1, 1, 0, 1 },
 	{ MODBUS_LEAK_RACK_FLOOR_GPO_AND_RELAY_ADDR, NULL, modbus_get_senser_reading,
 	  SENSOR_NUM_BPB_RACK_COOLANT_LEAKAGE_2, 1, 0, 1 },
+	// modbus writre
+	{ MODBUS_IT_GEAR_LEAK_DETECTED_ADDR, modbus_write_adm1272_reg, NULL,
+	  SENSOR_NUM_PB_1_HSC_P48V_PIN_PWR_W, 1, 0, 1, &OPERATION_DISABLE },
+	{ MODBUS_IT_GEAR_LEAK_DETECTED_ADDR, modbus_write_adm1272_reg, NULL,
+	  SENSOR_NUM_PB_2_HSC_P48V_PIN_PWR_W, 1, 0, 1, &OPERATION_DISABLE },
+	{ MODBUS_IT_GEAR_LEAK_DETECTED_ADDR, modbus_write_adm1272_reg, NULL,
+	  SENSOR_NUM_PB_3_HSC_P48V_PIN_PWR_W, 1, 0, 1, &OPERATION_DISABLE },
 };
 
 static modbus_command_mapping *ptr_to_modbus_table(uint16_t addr)
