@@ -451,6 +451,33 @@ static void free_modbus_command_table_memory(void)
 			SAFE_FREE(modbus_command_table[i].data);
 }
 
+static void wr_work_fn(struct k_work *my_work)
+{
+	CHECK_NULL_ARG(my_work);
+	modbus_command_mapping *p = CONTAINER_OF(my_work, modbus_command_mapping, work);
+	if (!p)
+		return;
+
+	p->wr_fn(p);
+	memset(p->data, 0, p->size);
+}
+
+static void wr_timeout_fn(struct k_timer *my_timer)
+{
+	CHECK_NULL_ARG(my_timer);
+	modbus_command_mapping *p = CONTAINER_OF(my_timer, modbus_command_mapping, timer);
+	if (!p)
+		return;
+
+	if (!p->wr_fn) {
+		LOG_ERR("write function is NULL");
+		return;
+	}
+
+	k_work_submit(&p->work);
+	k_timer_stop(my_timer);
+}
+
 void init_modbus_command_table(void)
 {
 	for (uint16_t i = 0; i < ARRAY_SIZE(modbus_command_table); i++) {
@@ -462,6 +489,12 @@ void init_modbus_command_table(void)
 		if (modbus_command_table[i].data == NULL) {
 			LOG_ERR("modbus_command_mapping[%i] malloc fail", i);
 			goto init_fail;
+		}
+
+		// if write function exist, init timeout function
+		if (modbus_command_table[i].wr_fn) {
+			k_work_init(&modbus_command_table[i].work, wr_work_fn);
+			k_timer_init(&modbus_command_table[i].timer, wr_timeout_fn, NULL);
 		}
 	}
 
@@ -489,8 +522,11 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 
 	ptr->data[offset] = reg;
 
-	if (offset == (ptr->size - 1))
+	k_timer_start(&ptr->timer, K_MSEC(10), K_NO_WAIT);
+	if (offset == (ptr->size - 1)) {
 		ret = ptr->wr_fn(ptr);
+		k_timer_stop(&ptr->timer);
+	}
 
 	return ret;
 }

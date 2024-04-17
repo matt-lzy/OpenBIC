@@ -37,7 +37,10 @@ typedef struct _modbus_command_mapping {
 	uint8_t arg1;
 	uint8_t arg2;
 	uint8_t size;
+
 	uint16_t *data;
+	struct k_work work; // for wr fn only
+	struct k_timer timer;
 } modbus_command_mapping;
 
 /* define modbus data address */
