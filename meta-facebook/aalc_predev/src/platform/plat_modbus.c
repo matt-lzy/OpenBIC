@@ -32,6 +32,7 @@
 #include "hal_gpio.h"
 #include "plat_gpio.h"
 #include "plat_fw_update.h"
+#include "libutil.h"
 #include <modbus_internal.h>
 #include "plat_modbus_i2c_master_w_r.h"
 
@@ -506,10 +507,21 @@ static int coil_wr(uint16_t addr, bool state)
 	if (addr < plat_gpio_cfg_size()) { //GPIO number
 		gpio_set((uint8_t)addr, (uint8_t)state);
 		return MODBUS_EXC_NONE;
-	} else if (addr == 0x0C30) { // FW update: Set RPU Stop/Run
+	} else if (addr == MODBUS_RPU_RUN_ADDR) { // FW update: Set RPU Stop/Run
+		if (!state) { //Set RPU Stop
+			disable_sensor_poll();
+			return all_fan_full_duty();
+		}
+		// return success for Setting RPU RUN
 		return MODBUS_EXC_NONE;
 	} else if (addr == 0x0C31) { // FW update: Synax Check
-		return MODBUS_EXC_NONE;
+		if (state) {
+			if (!get_sensor_poll_enable_flag())
+				return MODBUS_EXC_NONE;
+			else
+				return MODBUS_EXC_SERVER_DEVICE_FAILURE;
+		}
+		return MODBUS_EXC_ILLEGAL_DATA_ADDR;
 	} else {
 		return MODBUS_EXC_ILLEGAL_DATA_ADDR;
 	}
@@ -569,7 +581,7 @@ static struct modbus_user_callbacks mbs_cbs = {
 	.holding_reg_rd = holding_reg_rd,
 	.holding_reg_wr = holding_reg_wr,
 	.coil_rd = coil_rd,
-	.coil_wr = coil_wr,	
+	.coil_wr = coil_wr,
 };
 
 const static struct modbus_iface_param server_param = {

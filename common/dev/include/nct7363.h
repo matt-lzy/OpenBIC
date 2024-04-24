@@ -104,4 +104,6 @@ enum nct7363_wdt_sec {
 	WDT_DISABLE,
 	WDT_ERROR
 };
+
+uint8_t nct7363_set_duty(sensor_cfg *cfg, uint8_t duty, uint8_t port);
 #endif
