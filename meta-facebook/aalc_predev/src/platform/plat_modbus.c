@@ -514,14 +514,14 @@ static int coil_wr(uint16_t addr, bool state)
 		}
 		// return success for Setting RPU RUN
 		return MODBUS_EXC_NONE;
-	} else if (addr == 0x0C31) { // FW update: Synax Check
+	} else if (addr == MODBUS_SYNAX_CHECK_ADDR) { // FW update: Synax Check
 		if (state) {
-			if (!get_sensor_poll_enable_flag())
+			if (get_sensor_poll_enable_flag())
 				return MODBUS_EXC_NONE;
 			else
 				return MODBUS_EXC_SERVER_DEVICE_FAILURE;
 		}
-		return MODBUS_EXC_ILLEGAL_DATA_ADDR;
+		return MODBUS_EXC_ILLEGAL_DATA_VAL;
 	} else {
 		return MODBUS_EXC_ILLEGAL_DATA_ADDR;
 	}
