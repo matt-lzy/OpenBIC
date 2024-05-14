@@ -103,8 +103,56 @@ uint8_t modbus_command_read_hex_fan_pwr_tach_pct(modbus_command_mapping *cmd)
 
 uint8_t modbus_command_read_hex_pwr(modbus_command_mapping *cmd)
 {
-	// TO DO
-	return true;
+	// sum of hex pwr
+	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_EXC_ILLEGAL_DATA_VAL);
+	uint8_t read_array[14] = {
+		SENSOR_NUM_FB_1_HSC_P48V_PIN_PWR_W,  SENSOR_NUM_FB_2_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_3_HSC_P48V_PIN_PWR_W,  SENSOR_NUM_FB_4_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_5_HSC_P48V_PIN_PWR_W,  SENSOR_NUM_FB_6_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_7_HSC_P48V_PIN_PWR_W,  SENSOR_NUM_FB_8_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_9_HSC_P48V_PIN_PWR_W,  SENSOR_NUM_FB_10_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_11_HSC_P48V_PIN_PWR_W, SENSOR_NUM_FB_12_HSC_P48V_PIN_PWR_W,
+		SENSOR_NUM_FB_13_HSC_P48V_PIN_PWR_W, SENSOR_NUM_FB_14_HSC_P48V_PIN_PWR_W
+	};
+
+	uint16_t hex_pwr_val = 0, reading_data_back = 0;
+	int len = sizeof(read_array) / sizeof(read_array[0]);
+	for (int i = 0; i < len; i++) {
+		uint8_t reading_pwr_back = read_sensor_reading(read_array[i], &reading_data_back);
+		hex_pwr_val += reading_data_back;
+		if (reading_pwr_back == READ_SENSOR_FAIL)
+			return MODBUS_EXC_SERVER_DEVICE_FAILURE;
+	}
+
+	memcpy(cmd->data, &hex_pwr_val, sizeof(uint16_t) * cmd->cmd_size);
+	return MODBUS_EXC_NONE;
+}
+
+uint8_t modbus_command_read_hex_curr(modbus_command_mapping *cmd)
+{
+	// sum of hex curr
+	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_EXC_ILLEGAL_DATA_VAL);
+	uint8_t read_array[14] = {
+		SENSOR_NUM_FB_1_HSC_P48V_IOUT_CURR_A,  SENSOR_NUM_FB_2_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_3_HSC_P48V_IOUT_CURR_A,  SENSOR_NUM_FB_4_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_5_HSC_P48V_IOUT_CURR_A,  SENSOR_NUM_FB_6_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_7_HSC_P48V_IOUT_CURR_A,  SENSOR_NUM_FB_8_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_9_HSC_P48V_IOUT_CURR_A,  SENSOR_NUM_FB_10_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_11_HSC_P48V_IOUT_CURR_A, SENSOR_NUM_FB_12_HSC_P48V_IOUT_CURR_A,
+		SENSOR_NUM_FB_13_HSC_P48V_IOUT_CURR_A, SENSOR_NUM_FB_14_HSC_P48V_IOUT_CURR_A
+	};
+
+	uint16_t hex_curr_val = 0, reading_data_back = 0;
+	int len = sizeof(read_array) / sizeof(read_array[0]);
+	for (int i = 0; i < len; i++) {
+		uint8_t reading_curr_back = read_sensor_reading(read_array[i], &reading_data_back);
+		hex_curr_val += reading_data_back;
+		if (reading_curr_back == READ_SENSOR_FAIL)
+			return MODBUS_EXC_SERVER_DEVICE_FAILURE;
+	}
+
+	memcpy(cmd->data, &hex_curr_val, sizeof(uint16_t) * cmd->cmd_size);
+	return MODBUS_EXC_NONE;
 }
 
 uint8_t modbus_command_i2c_master_write_read(modbus_command_mapping *cmd)

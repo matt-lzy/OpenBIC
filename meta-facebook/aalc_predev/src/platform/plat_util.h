@@ -20,12 +20,14 @@ uint8_t modbus_command_i2c_master_write_read(modbus_command_mapping *cmd);
 uint8_t modbus_command_i2c_master_write_read_response(modbus_command_mapping *cmd);
 uint8_t modbus_command_read_rpu_pwr(modbus_command_mapping *cmd);
 uint8_t modbus_command_read_aalc_total_pwr(modbus_command_mapping *cmd);
+uint8_t modbus_command_read_hex_fan_pwr_tach_pct(modbus_command_mapping *cmd);
+uint8_t modbus_command_read_hex_pwr(modbus_command_mapping *cmd);
+uint8_t modbus_command_read_hex_curr(modbus_command_mapping *cmd);
 void regs_reverse(uint16_t reg_len, uint16_t *data);
 
-enum READNG_SENSOR_RESAULT
-{
-    READ_SENSOR_SUCCESS,
-    READ_SENSOR_FAIL,
+enum READNG_SENSOR_RESAULT {
+	READ_SENSOR_SUCCESS,
+	READ_SENSOR_FAIL,
 };
 
 #endif
