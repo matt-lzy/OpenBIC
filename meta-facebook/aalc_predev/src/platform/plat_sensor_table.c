@@ -24,6 +24,7 @@
 #include "ast_adc.h"
 #include "plat_hook.h"
 #include "plat_class.h"
+#include "plat_modbus.h"
 #include <logging/log.h>
 
 LOG_MODULE_REGISTER(plat_sensor_table);
@@ -1034,6 +1035,22 @@ float get_sensor_reading_to_real_val(uint8_t sensor_num)
 	float fraction = (reading >> 16) * 0.001f;
 
 	return (integer > 0) ? (integer + fraction) : (integer - fraction);
+}
+
+uint16_t get_sensor_reading_to_modbus_val(uint8_t sensor_num, int8_t exp, int8_t scale)
+{
+	int reading = 0;
+	uint8_t status = get_sensor_reading(sensor_config, sensor_config_count, sensor_num, &reading,
+					    GET_FROM_CACHE);
+
+	if (status != SENSOR_READ_SUCCESS) {
+		LOG_ERR("0x%02x get sensor cache fail", sensor_num);
+		return 0;
+	}
+	sensor_val *sval = (sensor_val *)&reading;
+	float val = (sval->integer * 1000 + sval->fraction) / 1000;
+	float r = pow_of_10(exp);
+	return val / scale / r; // scale
 }
 
 static uint8_t plat_def_sensor_read(sensor_cfg *cfg, int *reading)

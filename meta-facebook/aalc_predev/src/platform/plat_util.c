@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <kernel.h>
 #include "plat_modbus.h"
 #include "plat_util.h"
 #include "modbus_server.h"
@@ -26,6 +27,8 @@
 
 static uint16_t temp_read_length;
 static uint16_t temp_read_data[I2C_MASTER_READ_BACK_MAX_SIZE];
+
+static uint32_t start_time;
 
 LOG_MODULE_REGISTER(plat_util);
 
@@ -88,4 +91,10 @@ void regs_reverse(uint16_t reg_len, uint16_t *data)
 	CHECK_NULL_ARG(data);
 	for (uint16_t i = 0; i < reg_len; i++)
 		data[i] = sys_be16_to_cpu(data[i]);
+}
+
+uint32_t system_uptime()
+{
+	start_time = k_cycle_get_32();
+	return start_time;
 }

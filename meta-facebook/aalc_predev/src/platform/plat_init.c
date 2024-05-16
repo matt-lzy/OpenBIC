@@ -20,6 +20,7 @@
 #include <logging/log.h>
 #include "plat_class.h"
 #include "plat_modbus.h"
+#include "plat_util.h"
 
 LOG_MODULE_REGISTER(plat_init);
 
@@ -27,6 +28,7 @@ LOG_MODULE_REGISTER(plat_init);
 
 void pal_pre_init()
 {
+	system_uptime();
 	init_aalc_config();
 }
 
@@ -46,6 +48,7 @@ void pal_set_sys_status()
 {
 	return;
 }
+
 
 DEVICE_DEFINE(PRE_DEF_PROJ_GPIO, "PRE_DEF_PROJ_GPIO_NAME", &gpio_init, NULL, NULL, NULL,
 	      POST_KERNEL, DEF_PROJ_GPIO_PRIORITY, NULL);
