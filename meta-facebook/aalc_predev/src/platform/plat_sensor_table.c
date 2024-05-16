@@ -824,3 +824,24 @@ void load_sensor_config(void)
 	load_hsc_sensor_config();
 	load_sb_temp_sensor_config();
 }
+
+/*
+	get real float val from sensor cache
+	if fail, return 0
+*/
+float get_sensor_reading_to_real_val(uint8_t sensor_num)
+{
+	int reading = 0;
+	uint8_t status = get_sensor_reading(sensor_config, sensor_config_count, sensor_num,
+					    &reading, GET_FROM_CACHE);
+
+	if (status != SENSOR_READ_SUCCESS) {
+		LOG_ERR("0x%02x get sensor cache fail", sensor_num);
+		return 0;
+	}
+
+	int16_t integer = reading & 0xFFFF;
+	float fraction = (reading >> 16) * 0.001f;
+
+	return (integer > 0) ? (integer + fraction) : (integer - fraction);
+}
