@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plat_modbus.h"
+
 uint8_t modbus_error_log_count(modbus_command_mapping *cmd);
 uint8_t modbus_error_log_event(modbus_command_mapping *cmd);
+void error_log_event(uint8_t sensor_num, bool val_normal);
+void pal_load_eeprom_log(void);
 
 typedef struct _modbus_err_log_mapping {
 	uint16_t index;
@@ -34,7 +38,7 @@ enum LOG_ERROR_CODE {
 	LEAK_CHASSIS_2 = 0X0C,
 	LEAK_CHASSIS_3 = 0X0D,
 	LEAK_RPU_INT = 0X0E,
-    LEAK_RPU_EXT = 0X0E,
+    LEAK_RPU_EXT = 0X0F,
     LEAK_MAN_HOT = 0X10,
     LEAK_MAN_COLD = 0X11,
     LEAK_MAN_PAN_GPO = 0X6E,
@@ -49,3 +53,8 @@ enum LOG_ERROR_CODE {
     PUMP_2_SPEED_RECOVER = 0x2A,
     PUMP_3_SPEED_RECOVER = 0x2B,
 };
+
+typedef struct _err_sensor_mapping {
+	uint16_t err_code;
+	uint8_t sen_num;
+} err_sensor_mapping;
