@@ -19,6 +19,7 @@ uint8_t modbus_error_log_count(modbus_command_mapping *cmd);
 uint8_t modbus_error_log_event(modbus_command_mapping *cmd);
 void error_log_event(uint8_t sensor_num, bool val_normal);
 void pal_load_eeprom_log(void);
+bool modbus_clear_log(void);
 
 typedef struct _modbus_err_log_mapping {
 	uint16_t index;

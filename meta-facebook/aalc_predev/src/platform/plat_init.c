@@ -29,7 +29,6 @@ LOG_MODULE_REGISTER(plat_init);
 
 void pal_pre_init()
 {
-	system_uptime();
 	init_aalc_config();
 }
 

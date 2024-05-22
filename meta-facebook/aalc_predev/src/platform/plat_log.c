@@ -30,8 +30,8 @@
 LOG_MODULE_REGISTER(plat_log);
 
 static const uint8_t log_data_lengh = 20;
-static modbus_err_log_mapping err_log_data[20];
-static uint8_t err_sensor_caches[20];
+static modbus_err_log_mapping err_log_data[20]; // total log amount: 20
+static uint8_t err_sensor_caches[19]; // amount of LOG_ERROR_CODE
 
 #define AALC_FRU_LOG_START 0x0200
 #define AALC_FRU_LOG_SIZE 0x0C8
@@ -71,7 +71,7 @@ uint8_t modbus_error_log_count(modbus_command_mapping *cmd)
 
 static uint16_t newest_log_event_count(uint8_t order)
 {
-	if (order >= ARRAY_SIZE(err_log_data)) {
+	if (order > ARRAY_SIZE(err_log_data)) {
 		LOG_ERR("Invalid LOG count  %d", order);
 		return 0;
 	}
@@ -88,19 +88,23 @@ static uint16_t newest_log_event_count(uint8_t order)
 
 	if (is_reset) {
 		for (uint16_t count = 0; count < ARRAY_SIZE(err_log_data) - 1; count++) {
-			if (err_log_data[count].index < ARRAY_SIZE(err_log_data)) {
-				if (err_log_data[count].index >= err_log_data[count + 1].index)
-					newest_count = count;
-				else
+			if (err_log_data[count].index <= ARRAY_SIZE(err_log_data)) {
+				newest_count = count;
+				if (err_log_data[count].index < err_log_data[count + 1].index &&
+				    err_log_data[count + 1].index <= ARRAY_SIZE(err_log_data))
 					newest_count = count + 1;
+				else
+					break;
 			}
 		}
 	} else {
 		for (uint16_t count = 0; count < ARRAY_SIZE(err_log_data) - 1; count++) {
-			if (err_log_data[count].index >= err_log_data[count + 1].index)
-				newest_count = count;
-			else
+			if (err_log_data[count].index < err_log_data[count + 1].index)
 				newest_count = count + 1;
+			else {
+				newest_count = count;
+				break;
+			}
 		}
 	}
 
@@ -115,7 +119,34 @@ uint8_t modbus_error_log_event(modbus_command_mapping *cmd)
 
 	memcpy(cmd->data, &err_log_data[newest_log_event_count(order)],
 	       sizeof(uint16_t) * cmd->cmd_size);
+
+	regs_reverse(cmd->data_len, cmd->data);
 	return MODBUS_EXC_NONE;
+}
+
+bool modbus_clear_log(void)
+{
+	memset(err_log_data, 0, sizeof(err_log_data));
+	memset(err_sensor_caches, 0, sizeof(err_sensor_caches));
+	EEPROM_ENTRY fru_entry;
+
+	fru_entry.config.dev_id = MB_FRU_ID; //fru id
+	fru_entry.offset = AALC_FRU_LOG_START;
+	fru_entry.data_len = AALC_FRU_LOG_SIZE;
+	if (FRU_write(&fru_entry)) {
+		LOG_ERR("Clear EEPROM Log failed");
+		return false;
+	} else {
+		memcpy(&fru_entry.data[0], &err_log_data[0], fru_entry.data_len);
+		return true;
+	}
+}
+
+//systime format(uint32_t) consists of 2 regs, modbus response will revert the order of regs
+uint32_t systime_reverse_regs(void)
+{
+	uint32_t sys_time = (uint32_t)((k_uptime_get() / 1000) % INT32_MAX);
+	return ((sys_time >> 16) & 0xFFFF) | ((sys_time << 16) & 0xFFFF0000);
 }
 
 void error_log_event(uint8_t sensor_num, bool val_normal)
@@ -129,8 +160,8 @@ void error_log_event(uint8_t sensor_num, bool val_normal)
 				log_todo = true;
 				err_sensor_caches[i] = 0;
 				for (uint8_t i = 0; i < ARRAY_SIZE(sensor_normal_codes); i++) {
-					if (sensor_num == sensor_err_codes[i].sen_num)
-						err_code = sensor_err_codes[i].err_code;
+					if (sensor_num == sensor_normal_codes[i].sen_num)
+						err_code = sensor_normal_codes[i].err_code;
 				}
 				break;
 			}
@@ -159,13 +190,15 @@ void error_log_event(uint8_t sensor_num, bool val_normal)
 
 	if (log_todo) {
 		uint16_t newest_count = newest_log_event_count(1);
-		uint16_t fru_count = (newest_log_event_count(1) + 1) % ARRAY_SIZE(err_log_data);
+		uint16_t fru_count = (err_log_data[newest_count].index == 0) ?
+					     newest_count :
+					     ((newest_count + 1) % ARRAY_SIZE(err_log_data));
 
-		err_log_data[fru_count].index = (err_log_data[newest_count].index == 0XFFFF) ?
+		err_log_data[fru_count].index = (err_log_data[newest_count].index == 0xFFFF) ?
 							1 :
 							(err_log_data[newest_count].index + 1);
 		err_log_data[fru_count].err_code = err_code;
-		err_log_data[fru_count].sys_time = k_cycle_get_32() - system_uptime();
+		err_log_data[fru_count].sys_time = systime_reverse_regs();
 		err_log_data[fru_count].pump_duty = (uint16_t)pump_pwm_dev_duty_setting();
 		err_log_data[fru_count].fan_duty = (uint16_t)fan_pwm_dev_duty_setting();
 
@@ -197,8 +230,8 @@ void pal_load_eeprom_log(void)
 	fru_entry.config.dev_id = MB_FRU_ID; //fru id
 	fru_entry.offset = AALC_FRU_LOG_START;
 	fru_entry.data_len = AALC_FRU_LOG_SIZE;
-	if (FRU_read(&fru_entry) != FRU_READ_SUCCESS) {
+	if (FRU_read(&fru_entry) != FRU_READ_SUCCESS)
 		LOG_ERR("READ Log failed from EEPROM");
+	else
 		memcpy(&err_log_data[0], &fru_entry.data[0], fru_entry.data_len);
-	}
 }
