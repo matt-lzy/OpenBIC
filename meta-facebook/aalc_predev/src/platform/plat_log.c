@@ -133,13 +133,13 @@ bool modbus_clear_log(void)
 	fru_entry.config.dev_id = MB_FRU_ID; //fru id
 	fru_entry.offset = AALC_FRU_LOG_START;
 	fru_entry.data_len = AALC_FRU_LOG_SIZE;
+	
 	if (FRU_write(&fru_entry)) {
 		LOG_ERR("Clear EEPROM Log failed");
 		return false;
-	} else {
-		memcpy(&fru_entry.data[0], &err_log_data[0], fru_entry.data_len);
-		return true;
-	}
+	}	
+		
+	return true;
 }
 
 //systime format(uint32_t) consists of 2 regs, modbus response will revert the order of regs
