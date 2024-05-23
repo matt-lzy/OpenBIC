@@ -234,4 +234,16 @@ void pal_load_eeprom_log(void)
 		LOG_ERR("READ Log failed from EEPROM");
 	else
 		memcpy(&err_log_data[0], &fru_entry.data[0], fru_entry.data_len);
+
+	bool is_empty = true;
+	for (uint16_t i = 0; i < log_data_lengh; i++) {
+		if (err_log_data[i].index != 0XFFFF) {
+			is_empty = false;
+			break;
+		}
+	}
+
+	if(is_empty)
+		modbus_clear_log();
+
 }
