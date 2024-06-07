@@ -130,14 +130,14 @@ const char *const sensor_type_name[] = {
 	sensor_name_to_num(nct7363)
 	sensor_name_to_num(ads112c)
 	sensor_name_to_num(hdc1080)
-  sensor_name_to_num(ina238)
+	sensor_name_to_num(ina238)
 	sensor_name_to_num(nct214)
 	sensor_name_to_num(ast_tach)
 	sensor_name_to_num(xdp710)
 	sensor_name_to_num(ds160pt801)
 	sensor_name_to_num(rs31380r)
- 	sensor_name_to_num(ads1015)
- 	sensor_name_to_num(plat_def_sensor)
+	sensor_name_to_num(ads1015)
+	sensor_name_to_num(plat_def_sensor)
 };
 // clang-format on
 
