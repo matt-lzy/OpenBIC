@@ -27,15 +27,29 @@ void set_all_rpu_ready_pin_normal(void)
 	gpio_set(BIC_RPU_READY3, 1);
 }
 
+uint8_t get_rpu_ready_pin_status()
+{
+	if (gpio_get(BIC_RPU_READY0) && gpio_get(BIC_RPU_READY1) && gpio_get(BIC_RPU_READY2) &&
+	    gpio_get(BIC_RPU_READY3))
+		return 0;
+	else
+		return 1;
+}
+
 /* TO DO: 
 	1. turn off pump
 	2. change hx fan to min speed
 	3. store to non volatile memory
 */
-void fault_leak_action()
+void p0p1_failure_action()
 {
 	ctl_all_pwm_dev(0);
 	deassert_all_rpu_ready_pin();
+}
+
+void fault_leak_action()
+{
+	p0p1_failure_action();
 	gpio_set(RPU_LEAK_ALERT_N, 0);
 }
 
@@ -107,4 +121,9 @@ void aalc_leak_behavior(uint8_t sensor_num)
 		led_ctrl(LED_IDX_E_LEAK, LED_START_BLINK);
 	fault_led_control();
 	gpio_set(RPU_LEAK_ALERT_N, 0);
+}
+
+void emergency_button_action()
+{
+	p0p1_failure_action();
 }

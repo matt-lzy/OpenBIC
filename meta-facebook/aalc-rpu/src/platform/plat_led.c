@@ -144,10 +144,12 @@ uint8_t get_led_status(uint8_t idx)
 // }
 
 /*fault led control */
-uint8_t fault_led_threshold_sensor[] = {
+uint8_t fault_led_pump_threshold_sensor[] = {
 	SENSOR_NUM_PB_1_PUMP_TACH_RPM, // LED_FAULT_PUMP_1
 	SENSOR_NUM_PB_2_PUMP_TACH_RPM, // LED_FAULT_PUMP_2
 	SENSOR_NUM_PB_3_PUMP_TACH_RPM, // LED_FAULT_PUMP_3
+};
+uint8_t fault_led_threshold_sensor[] = {
 	SENSOR_NUM_PB_1_FAN_1_TACH_RPM, // LED_FAULT_PB_1_FAN_1
 	SENSOR_NUM_PB_1_FAN_2_TACH_RPM, // LED_FAULT_PB_1_FAN_2
 	SENSOR_NUM_PB_2_FAN_1_TACH_RPM, // LED_FAULT_PB_2_FAN_1
@@ -180,6 +182,18 @@ uint8_t fault_led_threshold_sensor[] = {
 bool fault_led_control(void)
 {
 	if (get_leak_status()) {
+		led_ctrl(LED_IDX_E_FAULT, LED_TURN_ON);
+		return true;
+	}
+
+	uint8_t pump_fail_num = 0;
+	for (uint8_t i = 0; i < ARRAY_SIZE(fault_led_pump_threshold_sensor); i++) {
+		if (get_threshold_status(fault_led_pump_threshold_sensor[i])) {
+			pump_fail_num++;
+		}
+	}
+
+	if (pump_fail_num > 1) {
 		led_ctrl(LED_IDX_E_FAULT, LED_TURN_ON);
 		return true;
 	}

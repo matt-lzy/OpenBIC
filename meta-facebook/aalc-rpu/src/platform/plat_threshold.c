@@ -131,17 +131,27 @@ bool rpu_ready_recovery()
 		SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_P_KPA,
 		SENSOR_NUM_BPB_RACK_LEVEL_2,
 		// except close pump sensor
-		SENSOR_NUM_PB_1_PUMP_TACH_RPM,
-		SENSOR_NUM_PB_2_PUMP_TACH_RPM,
-		SENSOR_NUM_PB_3_PUMP_TACH_RPM,
 		SENSOR_NUM_BPB_RPU_COOLANT_INLET_TEMP_C,
 		SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_TEMP_C,
 		SENSOR_NUM_BPB_RPU_COOLANT_FLOW_RATE_LPM,
+	};
+	uint8_t check_pump_fault[] = {
+		SENSOR_NUM_PB_1_PUMP_TACH_RPM,
+		SENSOR_NUM_PB_2_PUMP_TACH_RPM,
+		SENSOR_NUM_PB_3_PUMP_TACH_RPM,
 	};
 
 	for (uint8_t i = 0; i < ARRAY_SIZE(check_fault); i++)
 		if (get_threshold_status(check_fault[i]))
 			return false;
+	
+	uint8_t pump_fail_num = 0;
+	for (uint8_t i = 0; i < ARRAY_SIZE(check_pump_fault); i++)
+		if (get_threshold_status(check_pump_fault[i]))
+			pump_fail_num++;
+
+	if (pump_fail_num > 1)
+		return false;
 
 	return true;
 }
@@ -265,6 +275,9 @@ void pump_failure_do(uint8_t sensor_num, uint8_t status)
 	if (status == THRESHOLD_STATUS_LCR) {
 		//auto control for Hex Fan
 		error_log_event(sensor_num, IS_ABNORMAL_VAL);
+
+		if (get_sensor_status_for_modbus_cmd(ALL_PUMP_STATUS) > 1) //> 1 pump error
+			ctl_all_pwm_dev(0);
 		//wait 30 secs to shut down
 	} else if (status == THRESHOLD_STATUS_UCR) {
 		if (!pump_fail_ctrl(sensor_num))
