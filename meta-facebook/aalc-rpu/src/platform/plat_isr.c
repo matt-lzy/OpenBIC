@@ -125,5 +125,12 @@ void aalc_leak_behavior(uint8_t sensor_num)
 
 void emergency_button_action()
 {
-	p0p1_failure_action();
+	if (gpio_get(CDU_PWR_BTN) == HIGH_INACTIVE) {
+		if (p1_status_recovery())
+			ctl_all_pwm_dev(60);
+
+		if (rpu_ready_recovery())
+			set_all_rpu_ready_pin_normal();
+	} else 
+		p0p1_failure_action();
 }
