@@ -104,7 +104,9 @@ bool pump_status_recovery()
 		SENSOR_NUM_PB_2_FAN_1_TACH_RPM,		  SENSOR_NUM_PB_2_FAN_2_TACH_RPM,
 		SENSOR_NUM_PB_3_FAN_1_TACH_RPM,		  SENSOR_NUM_PB_3_FAN_2_TACH_RPM,
 		SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_P_KPA,  SENSOR_NUM_BPB_RACK_LEVEL_2,
-		SENSOR_NUM_BPB_RPU_COOLANT_FLOW_RATE_LPM,
+		SENSOR_NUM_BPB_RPU_COOLANT_FLOW_RATE_LPM, 
+
+		SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_TEMP_C,
 	};
 
 	for (uint8_t i = 0; i < ARRAY_SIZE(check_fault); i++)
@@ -351,7 +353,7 @@ void rpu_internal_fan_failure_do(uint32_t sensor_num, uint32_t status)
 void abnormal_press_do(uint32_t unused, uint32_t status)
 {
 	if (status == THRESHOLD_STATUS_UCR) {
-		ctl_all_pwm_dev(0);
+		ctl_all_pwm_dev(0);	
 	} else {
 		LOG_DBG("Unexpected threshold warning");
 	}
@@ -361,6 +363,19 @@ void abnormal_flow_do(uint32_t unused, uint32_t status)
 {
 	if (status == THRESHOLD_STATUS_LCR) {
 		ctl_all_pwm_dev(0);
+	} else if (status == THRESHOLD_STATUS_NOT_ACCESS) {
+		set_pwm_group(PWM_GROUP_E_PUMP, 100);
+	} else {
+		LOG_DBG("Unexpected threshold warning");
+	}
+}
+
+void abnormal_temp_do(uint32_t unused, uint32_t status)
+{
+	if (status == THRESHOLD_STATUS_UCR) {
+
+	} else if (status == THRESHOLD_STATUS_NOT_ACCESS) {
+		set_pwm_group(PWM_GROUP_E_HEX_FAN, 100);
 	} else {
 		LOG_DBG("Unexpected threshold warning");
 	}
@@ -386,7 +401,7 @@ void level_sensor_do(uint32_t unused, uint32_t status)
 
 sensor_threshold threshold_tbl[] = {
 	{ SENSOR_NUM_BPB_RPU_COOLANT_INLET_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 65, NULL, 0 },
-	{ SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 65, NULL, 0 },
+	{ SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 65, abnormal_temp_do, 0 },
 	{ SENSOR_NUM_MB_RPU_AIR_INLET_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 40, NULL, 0 },
 	{ SENSOR_NUM_BPB_HEX_WATER_INLET_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 65, NULL, 0 },
 	{ SENSOR_NUM_SB_HEX_AIR_INLET_1_TEMP_C, THRESHOLD_ENABLE_UCR, 0, 60, NULL, 0 },
@@ -465,6 +480,7 @@ sensor_threshold threshold_tbl[] = {
 	{ SENSOR_NUM_BPB_RACK_LEVEL_2, THRESHOLD_ENABLE_LCR, 0.1, 0, level_sensor_do, 0 },
 	{ SENSOR_NUM_FAN_PRSNT, THRESHOLD_ENABLE_DISCRETE, 0, 0, fb_prsnt_handle,
 	  THRESHOLD_ARG0_TABLE_INDEX, 0 },
+	//{ SENSOR_NUM_HEX_EXTERNAL_Y_FILTER, THRESHOLD_ENABLE_LCR, 500, 0, NULL, 0 },
 };
 
 #define SENSOR_NUM(type, index) SENSOR_NUM_FB_##index##_##type
