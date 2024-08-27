@@ -128,25 +128,27 @@ uint16_t get_sensor_status_for_modbus_cmd(uint8_t status)
 		break;
 	case AALC_SENSOR_ALARM:
 		WRITE_BIT(val, 0,
-			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_INLET_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_INLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 1,
 			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 2,
-			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_INLET_P_KPA)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_INLET_P_KPA) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 3,
 			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_OUTLET_P_KPA) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 4,
 			  (get_threshold_status(SENSOR_NUM_BPB_RPU_COOLANT_FLOW_RATE_LPM) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 5,
-			  (get_threshold_status(SENSOR_NUM_FB_1_HEX_OUTLET_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_FB_1_HEX_OUTLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 6,
-			  (get_threshold_status(SENSOR_NUM_FB_2_HEX_OUTLET_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_FB_2_HEX_OUTLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 7,
-			  (get_threshold_status(SENSOR_NUM_SB_HEX_AIR_INLET_1_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_SB_HEX_AIR_INLET_1_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 8,
-			  (get_threshold_status(SENSOR_NUM_SB_HEX_AIR_INLET_2_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_SB_HEX_AIR_INLET_2_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
 		WRITE_BIT(val, 9,
-			  (get_threshold_status(SENSOR_NUM_BPB_HEX_WATER_INLET_TEMP_C)) ? 1 : 0);
+			  (get_threshold_status(SENSOR_NUM_MB_RPU_AIR_INLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);
+		WRITE_BIT(val, 10,
+			  (get_threshold_status(SENSOR_NUM_BPB_HEX_WATER_INLET_TEMP_C) == THRESHOLD_STATUS_NOT_ACCESS) ? 1 : 0);			  
 		WRITE_BIT(val, 15, (get_threshold_status(SENSOR_NUM_BPB_RACK_LEVEL_2)) ? 1 : 0);
 		break;
 	case HEX_AIR_THERMOMETER_STATUS:
