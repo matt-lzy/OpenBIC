@@ -42,6 +42,7 @@ void emergency_button_action()
 			set_all_rpu_ready_pin_normal();
 	} else {
 		ctl_all_pwm_dev(0);
+		set_pump0_event(EMERGENCY_BUTTON);
 		deassert_all_rpu_ready_pin();
 	}
 }
@@ -61,7 +62,14 @@ void it_leak_handler(uint8_t idx)
 			  (idx == IT_LEAK_E_3) ? SENSOR_NUM_IT_LEAK_3_GPIO :
 						 0xFF;
 
+	uint16_t err_code = (idx == IT_LEAK_E_0) ? LEAK_CHASSIS_0 :
+			    (idx == IT_LEAK_E_1) ? LEAK_CHASSIS_1 :
+			    (idx == IT_LEAK_E_2) ? LEAK_CHASSIS_2 :
+			    (idx == IT_LEAK_E_3) ? LEAK_CHASSIS_3 :
+						   0xFF;
+
 	fault_leak_action();
+	set_pump0_event(err_code);
 	error_log_event(sen_num, IS_ABNORMAL_VAL);
 
 	switch (idx) {
@@ -107,6 +115,12 @@ void aalc_leak_behavior(uint8_t sensor_num)
 	fault_leak_action();
 	error_log_event(sensor_num, IS_ABNORMAL_VAL);
 
+	uint16_t err_code =
+		(sensor_num == SENSOR_NUM_BPB_CDU_COOLANT_LEAKAGE_VOLT_V)  ? LEAK_RPU_INT :
+		(sensor_num == SENSOR_NUM_BPB_RACK_COOLANT_LEAKAGE_VOLT_V) ? LEAK_MAN_PAN_GPO :
+									     0xFF;
+	set_pump0_event(err_code);
+	
 	uint8_t led_leak = (sensor_num == SENSOR_NUM_BPB_CDU_COOLANT_LEAKAGE_VOLT_V) ?
 				   AALC_STATUS_CDU_LEAKAGE :
 			   (sensor_num == SENSOR_NUM_BPB_RACK_COOLANT_LEAKAGE_VOLT_V) ?

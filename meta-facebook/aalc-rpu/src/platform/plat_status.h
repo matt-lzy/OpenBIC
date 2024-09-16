@@ -82,5 +82,7 @@ void set_leak_status(uint8_t idx, uint8_t val);
 uint16_t get_sticky_sensor_status(uint8_t idx);
 bool set_sticky_sensor_status(uint8_t idx, uint16_t val);
 uint16_t get_sensor_status_for_modbus_cmd(uint8_t status);
+uint16_t get_pump0_event();
+void set_pump0_event(uint16_t err_code);
 
 #endif //PLAT_STATUS_H

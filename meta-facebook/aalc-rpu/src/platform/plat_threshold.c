@@ -401,6 +401,7 @@ void abnormal_press_do(uint32_t unused, uint32_t status)
 {
 	if (status == THRESHOLD_STATUS_UCR) {
 		ctl_all_pwm_dev(0);
+		set_pump0_event(HIGH_PRESS);
 	} else {
 		LOG_DBG("Unexpected threshold warning");
 	}
@@ -436,7 +437,7 @@ void abnormal_temp_do(uint32_t sensor_num, uint32_t status)
 void level_sensor_do(uint32_t unused, uint32_t status)
 {
 	if (get_threshold_status(SENSOR_NUM_BPB_RACK_LEVEL_2)) {
-		ctl_all_pwm_dev(0);
+		//ctl_all_pwm_dev(0);
 		error_log_event(SENSOR_NUM_BPB_RACK_LEVEL_2, IS_ABNORMAL_VAL);
 		if (get_threshold_status(SENSOR_NUM_BPB_RACK_LEVEL_1))
 			led_ctrl(LED_IDX_E_COOLANT, LED_TURN_OFF);
@@ -583,8 +584,10 @@ void pump_failure_do(uint32_t thres_tbl_idx, uint32_t status)
 		//auto control for Hex Fan
 		if (*retry >= 3) {
 			error_log_event(sensor_num, IS_ABNORMAL_VAL);
-			if (pump_fail_check())
+			if (pump_fail_check()) {
 				ctl_all_pwm_dev(0);
+				set_pump0_event(PUMPS2_ABNORMAL);
+			}
 			*retry = 0;
 		} else {
 			(*retry)++;

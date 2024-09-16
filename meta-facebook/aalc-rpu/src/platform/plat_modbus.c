@@ -347,6 +347,14 @@ uint8_t modbus_error_log_count(modbus_command_mapping *cmd)
 	return MODBUS_EXC_NONE;
 }
 
+uint8_t modbus_pump0_event(modbus_command_mapping *cmd)
+{
+	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_EXC_ILLEGAL_DATA_VAL);
+
+	cmd->data[0] = get_pump0_event();
+	return MODBUS_EXC_NONE;
+}
+
 uint8_t modbus_error_log_event(modbus_command_mapping *cmd)
 {
 	CHECK_NULL_ARG_WITH_RETURN(cmd, MODBUS_EXC_ILLEGAL_DATA_VAL);
@@ -1076,6 +1084,8 @@ modbus_command_mapping modbus_command_table[] = {
 	{ MODBUS_EVENT_18_ERROR_LOG_ADDR, NULL, modbus_error_log_event, 0, 0, 0, 10 },
 	{ MODBUS_EVENT_19_ERROR_LOG_ADDR, NULL, modbus_error_log_event, 0, 0, 0, 10 },
 	{ MODBUS_EVENT_20_ERROR_LOG_ADDR, NULL, modbus_error_log_event, 0, 0, 0, 10 },
+	//factor for pump duty 0
+	{ MODBUS_PUMP_DUTY_0_EVENT_ADDR, NULL, modbus_pump0_event, 0, 0, 0, 1 },
 	// FRU write read
 	{ MODBUS_MB_FRU_ADDR, modbus_write_fruid_data, modbus_read_fruid_data, MB_FRU_ID, 0, 0,
 	  256 },

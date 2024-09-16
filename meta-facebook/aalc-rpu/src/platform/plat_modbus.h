@@ -326,6 +326,8 @@ typedef struct _sensor_access_mapping {
 #define MODBUS_EVENT_19_ERROR_LOG_ADDR 0x1ADD
 #define MODBUS_EVENT_20_ERROR_LOG_ADDR 0x1AE7
 
+#define MODBUS_PUMP_DUTY_0_EVENT_ADDR 0xA500
+
 /* FW Update */
 #define MODBUS_FW_REVISION_ADDR 0x19E8
 #define MODBUS_FW_DOWNLOAD_ADDR 0x2000

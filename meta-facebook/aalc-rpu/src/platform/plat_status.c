@@ -27,6 +27,17 @@
 LOG_MODULE_REGISTER(plat_status);
 
 static uint8_t leak_flag;
+static uint16_t pump0_event;
+
+uint16_t get_pump0_event()
+{
+	return pump0_event;
+}
+
+void set_pump0_event(uint16_t err_code)
+{
+	pump0_event = err_code;
+}
 
 uint8_t get_leak_status()
 {
