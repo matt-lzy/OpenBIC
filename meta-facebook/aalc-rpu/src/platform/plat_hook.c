@@ -37,6 +37,8 @@ LOG_MODULE_REGISTER(plat_hook);
 #define FB_SIG_PRSNT_ADDR_ODD 0x4E // 8 bit address (1, 3, 5, 7, 9, 11, 13)
 
 #define DIFFERENTIAL_MODE 0x01
+#define SENSOR_CACHE_MAX_NUM 30
+static flow_cache_data_mapping flow_cache_data[SENSOR_CACHE_MAX_NUM];
 
 K_MUTEX_DEFINE(i2c_1_PCA9546a_mutex);
 K_MUTEX_DEFINE(i2c_2_PCA9546a_mutex);
@@ -1050,10 +1052,37 @@ bool post_ads112c_read(sensor_cfg *cfg, void *args, int *reading)
 	case PLATFORM_ADS112C_FLOW: //Flow_Rate_LPM
 		v_val = 5 - ((32767 - rawValue) * 0.000153);
 		val = (((v_val / 5.0) - 0.1) * (flow_Pmax - flow_Pmin) / 0.8);
-		val = (val - 7.56494) * 1.076921;
-		val = 2.745 * val + 20.49;
-		val = 1.0018 * val + 5.2047;
+		val = 1.3232 * val - 1.0314;
 		val = (val < 0) ? 0 : val;
+
+		bool is_cache = false;
+		for (uint8_t i = 0; i < SENSOR_CACHE_MAX_NUM; i++) {
+			if (flow_cache_data[i].is_newest && flow_cache_data[i].is_record) {
+				flow_cache_data[i].is_newest = false;
+				flow_cache_data[(i + 1) % SENSOR_CACHE_MAX_NUM].is_newest = true;
+				flow_cache_data[(i + 1) % SENSOR_CACHE_MAX_NUM].is_record = true;
+				flow_cache_data[(i + 1) % SENSOR_CACHE_MAX_NUM].flow_val = val;
+				is_cache = true;
+				break;
+			}
+		}
+
+		if (!is_cache) {
+			flow_cache_data[1].is_newest = true;
+			flow_cache_data[1].is_record = true;
+			flow_cache_data[1].flow_val = val;
+		}
+
+		double count_num = 0;
+		double total_val = 0;
+		for (uint8_t i = 0; i < SENSOR_CACHE_MAX_NUM; i++) {
+			if (flow_cache_data[i].is_record) {
+				total_val = total_val + flow_cache_data[i].flow_val;
+				count_num++;
+			}
+		}
+
+		val = total_val / count_num;
 		break;
 	case PLATFORM_ADS112C_PRESS: //Filter_P/Outlet_P/Inlet_P
 		v_val = 5 - ((32767 - rawValue) * 0.000153);

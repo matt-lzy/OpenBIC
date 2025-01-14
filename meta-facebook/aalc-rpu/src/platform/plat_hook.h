@@ -39,6 +39,12 @@
 #define BUS_8_MUX_ADDR 0xE8 >> 1
 #define BUS_9_MUX_ADDR 0xE8 >> 1
 
+typedef struct _flow_cache_data_mapping {
+	bool is_record;
+	bool is_newest;
+	double flow_val;
+} flow_cache_data_mapping;
+
 typedef struct _ads112c_post_arg {
 	uint8_t plat_sensor_type;
 } ads112c_post_arg;
