@@ -1068,9 +1068,9 @@ bool post_ads112c_read(sensor_cfg *cfg, void *args, int *reading)
 		}
 
 		if (!is_cache) {
-			flow_cache_data[1].is_newest = true;
-			flow_cache_data[1].is_record = true;
-			flow_cache_data[1].flow_val = val;
+			flow_cache_data[0].is_newest = true;
+			flow_cache_data[0].is_record = true;
+			flow_cache_data[0].flow_val = val;
 		}
 
 		double count_num = 0;
@@ -1216,6 +1216,11 @@ bool get_fb_present_status(uint16_t *fb_present_status)
 	*fb_present_status = pwr_prsnt & sig_prsnt;
 
 	return true;
+}
+
+void clean_flow_cache_data()
+{
+	memset(flow_cache_data, 0x00, sizeof(flow_cache_data));
 }
 
 max11617_init_arg max11617_init_args[] = {

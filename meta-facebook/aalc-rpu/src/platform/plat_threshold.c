@@ -1129,9 +1129,10 @@ void plat_sensor_poll_post()
 	if (!get_sensor_init_done_flag())
 		return;
 
-	if (!get_sensor_poll_enable_flag())
+	if (!get_sensor_poll_enable_flag()) {
+		clean_flow_cache_data();
 		return;
-
+	}
 	if (!get_threshold_poll_enable_flag())
 		return;
 
