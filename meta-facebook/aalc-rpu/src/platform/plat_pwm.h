@@ -16,6 +16,9 @@
 
 #define PWM_PORT0 0
 
+#define REDUNDANT_STEP1_RETRY 2 /*Current interval in zone_table is 5s. DISABLE-> STEP1 spent 5*2 s*/
+#define REDUNDANT_STEP2_RETRY 2/*Current interval in zone_table is 5s. STEP1-> STEP2 spent 5*2 s*/
+
 enum PWM_DEVICE_E {
 	PWM_DEVICE_E_FB_FAN_1 = 0,
 	PWM_DEVICE_E_FB_FAN_2,
@@ -62,6 +65,12 @@ enum MANUAL_PWM_E {
 	MANUAL_PWM_E_PUMP_FAN_3,
 	MANUAL_PWM_E_RPU_PCB_FAN,
 	MANUAL_PWM_E_MAX,
+};
+
+enum REDUNDANCY_TRANSFORM_E {
+	REDUNDANCY_TRANSFORM_DISABLE = 0, 
+	REDUNDANCY_TRANSFORM_STEP_1,
+	REDUNDANCY_TRANSFORM_STEP_2,
 };
 
 void init_pwm_dev(void);
