@@ -220,6 +220,9 @@ bool pump_setting_set_pump_redundant(pump_reset_struct *data, uint8_t bit_val)
 {
 	CHECK_NULL_ARG_WITH_RETURN(data, false);
 
+	if (bit_val)
+	    set_redundant_transform_phase(REDUNDANCY_TRANSFORM_DISABLE);
+		
 	pump_redundant_enable(bit_val);
 
 	return true;

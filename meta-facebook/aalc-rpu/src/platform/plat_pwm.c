@@ -292,51 +292,79 @@ static uint8_t ctl_pwm_pump(uint8_t duty)
 				(redundant_mode == PUMP_REDUNDANT_13) ? PWM_DEVICE_E_PB_PUMB_2 :
 				(redundant_mode == PUMP_REDUNDANT_23) ? PWM_DEVICE_E_PB_PUMB_1 :
 									PWM_DEVICE_E_MAX;
-
+	printf("redundant_dev: %d\n", redundant_dev);
+	printf("redundant_dev_pre: %d\n", redundant_dev_pre);
+	printf("pump1_duty: %d\n", get_pwm_cache(PWM_DEVICE_E_PB_PUMB_1));
+	printf("pump2_duty: %d\n", get_pwm_cache(PWM_DEVICE_E_PB_PUMB_2));
+	printf("pump3_duty: %d\n", get_pwm_cache(PWM_DEVICE_E_PB_PUMB_3));
 	if (redundant_dev != PWM_DEVICE_E_MAX && redundant_dev_pre != redundant_dev) {
-		switch (redundant_phase) {
+		switch (redundant_phase) {	
 		case REDUNDANCY_TRANSFORM_DISABLE:
-			ret = (set_pwm_group(PWM_GROUP_E_PUMP, 100) ? 1 : 0);
-			if (redundant_dev_pre != PWM_DEVICE_E_MAX)
-				ret = (plat_pwm_ctrl(redundant_dev_pre, 0) ? 1 : 0);
-
+		    printf("step1-1\n");
+			for (uint8_t i = PWM_DEVICE_E_PB_PUMB_1; i <= PWM_DEVICE_E_PB_PUMB_3; i++) {
+				if (i == redundant_dev_pre)
+					ret |= (plat_pwm_ctrl(i, 0) ? 1 : 0);
+				else
+					ret |= (plat_pwm_ctrl(i, 100) ? 1 : 0);
+			}
+			printf("step1-2\n");
 			redundant_step1_count--;
-			if (redundant_step1_count == 0 ) {
+			if (redundant_step1_count == 0) {
 				redundant_phase = REDUNDANCY_TRANSFORM_STEP_1;
 				redundant_step1_count = REDUNDANT_STEP1_RETRY;
 			}
+			printf("step1-3\n");
 			return ret;
-			break;
-		case REDUNDANCY_TRANSFORM_STEP_1:		
-			ret = (set_pwm_group(PWM_GROUP_E_PUMP, 100) ? 1 : 0);
-			ret = (plat_pwm_ctrl(redundant_dev, 0) ? 1 : 0);
-
-			redundant_step2_count--;			
-			if (redundant_step2_count == 0 ) {
+		case REDUNDANCY_TRANSFORM_STEP_1:
+		    printf("step2-1\n");
+			for (uint8_t i = PWM_DEVICE_E_PB_PUMB_1; i <= PWM_DEVICE_E_PB_PUMB_3; i++) {
+				if (i == redundant_dev)
+					ret |= (plat_pwm_ctrl(i, 0) ? 1 : 0);
+				else
+					ret |= (plat_pwm_ctrl(i, 100) ? 1 : 0);
+			}
+			printf("step2-2\n");
+			redundant_step2_count--;
+			if (redundant_step2_count == 0) {
 				redundant_phase = REDUNDANCY_TRANSFORM_STEP_2;
 				redundant_step2_count = REDUNDANT_STEP2_RETRY;
-			}			
+			}
+			printf("step2-3\n");
 			return ret;
-			break;
 		case REDUNDANCY_TRANSFORM_STEP_2:
 			redundant_dev_pre = redundant_dev;
-			goto out;
+			printf("step3-1\n");
 			break;
 		}
 	} else {
 		redundant_phase = REDUNDANCY_TRANSFORM_DISABLE;
 		if (redundant_dev == PWM_DEVICE_E_MAX)
 			redundant_dev_pre = PWM_DEVICE_E_MAX;
-		goto out;
+		printf("disable-redundant_dev: %d\n", redundant_dev);
+		printf("disable-redundant_dev_pre: %d\n", redundant_dev_pre);			
+		printf("step-disable\n");
 	}
-out:
+
 	for (uint8_t i = PWM_DEVICE_E_PB_PUMB_1; i <= PWM_DEVICE_E_PB_PUMB_3; i++) {
 		if (i == redundant_dev)
-			ret = (plat_pwm_ctrl(i, 0) ? 1 : 0);
+			ret |= (plat_pwm_ctrl(i, 0) ? 1 : 0);
 		else
-			ret = (plat_pwm_ctrl(i, duty) ? 1 : 0);
+			ret |= (plat_pwm_ctrl(i, duty) ? 1 : 0);
 	}
+	printf("step-end\n");
 	return ret;
+}
+
+uint8_t get_redundant_transform_phase()
+{
+	return redundant_phase;
+}
+
+void set_redundant_transform_phase(uint8_t redundant_transform_phase)
+{
+	redundant_phase = redundant_transform_phase;
+	if (redundant_transform_phase == REDUNDANCY_TRANSFORM_DISABLE)
+	     redundant_dev_pre = PWM_DEVICE_E_MAX;
 }
 
 uint8_t ctl_all_pwm_dev(uint8_t duty)

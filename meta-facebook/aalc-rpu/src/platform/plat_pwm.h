@@ -76,6 +76,8 @@ enum REDUNDANCY_TRANSFORM_E {
 void init_pwm_dev(void);
 int ast_pwm_set(int duty);
 uint8_t plat_pwm_ctrl(enum PWM_DEVICE_E dev, uint8_t duty);
+uint8_t get_redundant_transform_phase();
+void set_redundant_transform_phase(uint8_t redundant_transform_phase);
 uint8_t ctl_all_pwm_dev(uint8_t duty);
 uint8_t set_pwm_group(uint8_t group, uint8_t duty);
 uint8_t get_pwm_group_cache(uint8_t group);
