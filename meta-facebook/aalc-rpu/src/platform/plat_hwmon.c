@@ -221,7 +221,7 @@ bool pump_setting_set_pump_redundant(pump_reset_struct *data, uint8_t bit_val)
 	CHECK_NULL_ARG_WITH_RETURN(data, false);
 
 	if (bit_val)
-		set_redundant_transform_phase(REDUNDANCY_TRANSFORM_DISABLE);
+		reset_redundant_transform_status();
 
 	pump_redundant_enable(bit_val);
 
@@ -426,8 +426,11 @@ uint8_t pwm_control(uint8_t group, uint8_t duty)
 	uint32_t redundant_check = PUMP_REDUNDANT_DISABLE;
 	if (get_fsc_mode() == FSC_MODE_SEMI_MODE) {
 		// failure control in semi mode
-		if (failure_behavior(group))
+		if (failure_behavior(group)) {
+			if (group == PWM_GROUP_E_PUMP)
+				reset_redundant_transform_status();
 			return 0;
+		}
 		redundant_check = get_status_flag(STATUS_FLAG_PUMP_REDUNDANT);
 	}
 
@@ -480,12 +483,20 @@ uint8_t pwm_control(uint8_t group, uint8_t duty)
 
 	// 10s flow rate ready + 1s polling error
 	if ((k_uptime_get() - auto_tune_time) > 11000) {
-		if (failure_behavior(group))
+		if (failure_behavior(group)) {
+			if (group == PWM_GROUP_E_PUMP)
+				reset_redundant_transform_status();
 			return 0;
+		}
 	}
 
-	if (!set_pwm_group(group, duty))
-		return 0;
+	if (group == PWM_GROUP_E_PUMP) {
+		if (!ctl_pwm_pump(duty, duty, duty))
+			return 0;
+	} else {
+		if (!set_pwm_group(group, duty))
+			return 0;
+	}
 
 	return 1;
 }
