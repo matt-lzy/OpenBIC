@@ -220,8 +220,7 @@ bool pump_setting_set_pump_redundant(pump_reset_struct *data, uint8_t bit_val)
 {
 	CHECK_NULL_ARG_WITH_RETURN(data, false);
 
-	if (bit_val)
-		reset_redundant_transform_status();
+	reset_redundant_transform_status();
 
 	pump_redundant_enable(bit_val);
 
@@ -346,7 +345,7 @@ void pump_redundant_handler_disable(struct k_timer *timer)
 }
 K_TIMER_DEFINE(pump_redundant_timer, pump_redundant_handler, pump_redundant_handler_disable);
 
-static uint8_t pump_redundant_switch_time = 7;
+static uint8_t pump_redundant_switch_time = 30;
 static uint8_t pump_redundant_switch_time_type = 0; /* for test, 0: day, 1: minute */
 uint8_t get_pump_redundant_switch_time()
 {
